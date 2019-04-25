@@ -1,0 +1,43 @@
+---
+- name: "Installing basic packages"
+  yum:
+    name:
+      - nano
+      - open-vm-tools
+      - bind-utils
+      - epel-release
+      - firewalld
+      - libselinux-python
+    state: installed
+
+- name: "Installing net-snmp"
+  yum:
+    name: net-snmp
+    state: installed
+  notify: configuring-snmp
+
+- name: "Installing chrony"
+  yum:
+    name: chrony
+    state: installed
+  notify: configuring-chrony
+
+- name: "Installing Rsyslog"
+  yum:
+    name: rsyslog
+    state: installed
+  notify: configuring-rsyslog
+
+- name: "Installing cockpit and selinux tools"
+  yum:
+    name: 
+      - cockpit
+      - setroubleshoot-server
+    state: installed
+  notify: configuring-cockpit
+
+- name: "Enabling and starting firewalld"
+  service:
+      name: firewalld
+      enabled: yes
+      state: started

@@ -1,0 +1,73 @@
+---
+- name: configuring-chrony
+  copy: src=../files/chrony.conf dest=/etc/chrony.conf owner=root group=root mode=0611
+  notify:
+  - enable-and-restart-chrony
+
+- name: enable-and-restart-chrony
+  service:
+     name: chronyd
+     enabled: yes
+     state: restarted
+
+- name: configuring-rsyslog
+  copy: src=../files/rsyslog.conf dest=/etc/rsyslog.conf owner=root group=root mode=0644
+  notify:
+  - enable-and-restart-rsyslog
+
+- name: enable-and-restart-rsyslog
+  service:
+     name: rsyslog
+     enabled: yes
+     state: restarted
+
+- name: configuring-snmp
+  copy: src=../files/snmpd.conf dest=/etc/snmp/snmpd.conf owner=root group=root mode=0600
+  notify:
+  - create-snmp-user
+  - open-snmp-port
+  - enable-snmp
+  #- get-distro-file # see README.md
+
+- name: create-snmp-user
+  shell: net-snmp-create-v3-user -ro -A password -a SHA -X password -x AES johndoe
+
+- name: get-distro-file
+  get_url:
+    url: https://raw.githubusercontent.com/librenms/librenms-agent/master/snmp/distro
+    dest: /usr/bin/distro 
+    force_basic_auth: yes
+  notify: apply-permissions-to-distro
+
+- name: apply-permissions-to-distro
+  file:
+    path: /usr/bin/distro
+    owner: root
+    group: root
+    mode: 0755
+
+- name: open-snmp-port
+  firewalld:
+     service: snmp
+     permanent: yes
+     immediate: yes
+     state: enabled
+  notify: "restart firewalld"
+   
+- name: enable-snmp
+  service:
+    name: snmpd
+    enabled: yes
+    state: started
+    
+- name: configuring-cockpit
+  service:
+    name: cockpit
+    enabled: yes
+    state: started
+     
+- name: restart-firewalld
+  service:
+    name: firewalld
+    state: restarted
+  listen: "restart firewalld"

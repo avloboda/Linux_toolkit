@@ -1,0 +1,5 @@
+---
+- hosts: new
+  become: true
+  roles:
+  - startup
