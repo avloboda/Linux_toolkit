@@ -1,0 +1,45 @@
+---
+- name: configuring-snmp
+  copy: src=../files/snmpd.conf dest=/etc/snmp/snmpd.conf owner=root group=root mode=0600
+  notify:
+  - create-snmp-user
+  - open-snmp-port
+  - enable-snmp
+  #- get-distro-file # see README.md
+
+- name: create-snmp-user
+  shell: net-snmp-create-v3-user -ro -A myauthpass -a SHA -X myprivpass -x AES v3username
+
+- name: get-distro-file
+  get_url:
+    url: https://raw.githubusercontent.com/librenms/librenms-agent/master/snmp/distro
+    dest: /usr/bin/distro 
+    force_basic_auth: yes
+  notify: apply-permissions-to-distro
+
+- name: apply-permissions-to-distro
+  file:
+    path: /usr/bin/distro
+    owner: root
+    group: root
+    mode: 0755
+
+- name: open-snmp-port
+  firewalld:
+     service: snmp
+     permanent: yes
+     immediate: yes
+     state: enabled
+  notify: "restart firewall"
+   
+- name: enable-snmp
+  service:
+    name: snmpd
+    enabled: yes
+    state: started
+
+- name: restart-firewall
+  service:
+    name: firewalld
+    state: restarted
+  listen: "restart firewall"

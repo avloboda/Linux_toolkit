@@ -1,0 +1,6 @@
+---
+- name: "Installing net-snmp"
+  yum:
+    name: net-snmp
+    state: installed
+  notify: configuring-snmp
